@@ -10,6 +10,7 @@ public class Controller2D : MonoBehaviour {
 
 	private BoxCollider2D collider;
 	private RaycastOrigins raycastOrigins;
+	public CollisionInfo collisions;
 
 	// Raycasts being drawn both Vertically and Horizontally from the player 
 	public int horizontalRayCount = 4;
@@ -31,6 +32,8 @@ public class Controller2D : MonoBehaviour {
 	public void Move(Vector3 velocity){
 		// Call the UpdateRaycastOrigins function
 		UpdateRaycastOrigins ();
+
+		collisions.Reset ();
 
 		if (velocity.x != 0) {
 			// Call the HorizontalCollisions function
@@ -64,6 +67,11 @@ public class Controller2D : MonoBehaviour {
 			if (hit){
 				velocity.x = (hit.distance - skinWidth) * directionX;
 				rayLength = hit.distance;
+
+				// if the player is moving left AND they've collided with something on the left, collisions.left is equal to true
+				collisions.left = directionX == -1;
+				// if the player is moving right AND they've collided with something on the right, collisions.right is equal to true
+				collisions.right = directionX == 1;
 			}
 		}
 	}
@@ -87,6 +95,11 @@ public class Controller2D : MonoBehaviour {
 			if (hit){
 				velocity.y = (hit.distance - skinWidth) * directionY;
 				rayLength = hit.distance;
+
+				// if the player is moving downwards AND they've collided with something below them, collisions.below is equal to true
+				collisions.below = directionY == -1;
+				// if the player is upwards AND they've collided with something above them, collisions.above is equal to true
+				collisions.above = directionY == 1;
 			}
 		}
 	}
@@ -128,5 +141,16 @@ public class Controller2D : MonoBehaviour {
 	struct RaycastOrigins{
 		public Vector2 topLeft, topRight;
 		public Vector2 bottomLeft, bottomRight;
+	}
+
+	// a public struct to get info on which direction the collisiosn are being executed
+	public struct CollisionInfo{
+		public bool above, below;
+		public bool left, right;
+
+		public void Reset(){
+			above = below = false;
+			left = right = false;
+		}
 	}
 }

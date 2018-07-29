@@ -16,6 +16,11 @@ public class Player : MonoBehaviour {
 	}
 
 	void Update(){
+		// This IF check stops the player from accumulating gravity, therefore stopping them from falling at a super fast speed
+		if (controller.collisions.above || controller.collisions.below) {
+			velocity.y = 0;
+		}
+
 		// Store the Input in a Vector2 variable
 		Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
