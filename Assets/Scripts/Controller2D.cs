@@ -16,6 +16,9 @@ public class Controller2D : MonoBehaviour {
 	public int horizontalRayCount = 4;
 	public int verticalRayCount = 4;
 
+	// Max slope angle that can be climbed
+	public float maxClimbAngle = 80f;
+
 	// The spacing between the Raycasts
 	public float horizontalRaySpacing;
 	public float verticalRaySpacing;
@@ -65,17 +68,27 @@ public class Controller2D : MonoBehaviour {
 			Debug.DrawRay (rayOrigin, Vector2.right * directionX * rayLength, Color.green);
 
 			if (hit){
-				velocity.x = (hit.distance - skinWidth) * directionX;
-				rayLength = hit.distance;
 
-				// if the player is moving left AND they've collided with something on the left, collisions.left is equal to true
-				collisions.left = directionX == -1;
-				// if the player is moving right AND they've collided with something on the right, collisions.right is equal to true
-				collisions.right = directionX == 1;
+				// Find and get the angle of the ground the player is standing on -> the angle is found as the distance between the surfaces normal and the global UP direction
+				float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+
+				if (i == 0 && slopeAngle <= maxClimbAngle) {
+					//Debug.Log ("Slope Angle: " + slopeAngle);
+					ClimbSlope(ref velocity, slopeAngle);
+				}
+
+				if (!collisions.climbingSlope || slopeAngle > maxClimbAngle) {
+					velocity.x = (hit.distance - skinWidth) * directionX;
+					rayLength = hit.distance;
+
+					// if the player is moving left AND they've collided with something on the left, collisions.left is equal to true
+					collisions.left = directionX == -1;
+					// if the player is moving right AND they've collided with something on the right, collisions.right is equal to true
+					collisions.right = directionX == 1;
+				}
 			}
 		}
 	}
-
 
 	void VerticalCollisions(ref Vector3 velocity){
 
@@ -103,6 +116,26 @@ public class Controller2D : MonoBehaviour {
 			}
 		}
 	}
+
+	void ClimbSlope(ref Vector3 velocity, float slopeAngle){
+		// Player must have same speed climbing up slopes as they would moving on a flat surface
+		float moveDistance = Mathf.Abs(velocity.x);
+		float climbVelocityY = Mathf.Sin (slopeAngle * Mathf.Deg2Rad) * moveDistance;
+
+		// Allow the player to jump on slopes
+		if (velocity.y <= climbVelocityY) {
+
+			velocity.y = climbVelocityY;
+			velocity.x = Mathf.Cos (slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(velocity.x);
+
+			// Set the collisions.below = true
+			collisions.below = true;
+			// Set the collisions.climbingSlope = true
+			collisions.climbingSlope = true;
+			collisions.slopeAngle = slopeAngle;
+		}
+	}
+
 
 	// This function updates the RaycastOrigin positions
 	void UpdateRaycastOrigins(){
@@ -148,9 +181,15 @@ public class Controller2D : MonoBehaviour {
 		public bool above, below;
 		public bool left, right;
 
+		public bool climbingSlope;
+		public float slopeAngle, slopeAngleOld;
+
 		public void Reset(){
 			above = below = false;
 			left = right = false;
+			climbingSlope = false;
+			slopeAngleOld = slopeAngle;
+			slopeAngle = 0;
 		}
 	}
 }
