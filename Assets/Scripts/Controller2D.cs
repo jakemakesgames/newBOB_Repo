@@ -2,34 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof (BoxCollider2D))]
-public class Controller2D : MonoBehaviour {
 
-	const float skinWidth = .015f;
-	public LayerMask collisionMask;
+public class Controller2D : RaycastController {
 
-	private BoxCollider2D collider;
-	private RaycastOrigins raycastOrigins;
 	public CollisionInfo collisions;
-
-	// Raycasts being drawn both Vertically and Horizontally from the player 
-	public int horizontalRayCount = 4;
-	public int verticalRayCount = 4;
 
 	// Max slope angle that can be climbed
 	public float maxClimbAngle = 80f;
 	public float maxDescendAngle = 75f;
 
-	// The spacing between the Raycasts
-	public float horizontalRaySpacing;
-	public float verticalRaySpacing;
+	public override void Start(){
+		base.Start ();
 
-	void Start(){
-		// Assigning the BoxCollider2D component equal to the collider variable
-		collider = GetComponent<BoxCollider2D> ();
-
-		// Call the CalculateRaySpacing function
-		CalculateRaySpacing ();
 	}
 
 	// This is the function that moves the Player (Called from the Player script)
@@ -201,43 +185,6 @@ public class Controller2D : MonoBehaviour {
 				}
 			}
 		}
-	}
-
-	// This function updates the RaycastOrigin positions
-	void UpdateRaycastOrigins(){
-		// Temporary Bounds variable set to the Collider components bounds
-		Bounds bounds = collider.bounds;
-		// Temp variable above is inwards of itself the amount of the skinWidth variable
-		bounds.Expand (skinWidth * -2);
-
-		// Setting the RaycastOrigins for the corners of the BoxCollider component
-		raycastOrigins.bottomLeft = new Vector2 (bounds.min.x, bounds.min.y);
-		raycastOrigins.bottomRight = new Vector2 (bounds.max.x, bounds.min.y);
-		raycastOrigins.topLeft = new Vector2 (bounds.min.x, bounds.max.y);
-		raycastOrigins.topRight = new Vector2 (bounds.max.x, bounds.max.y);
-
-	}
-
-	// This function calculates the spacing betwen the Raycasts drawn
-	void CalculateRaySpacing(){
-		// Temporary Bounds variable set to the Collider components bounds
-		Bounds bounds = collider.bounds;
-		// Temp variable above is inwards of itself the amount of the skinWidth variable
-		bounds.Expand (skinWidth * -2);
-
-		// Make sure the RaycastCount is greater than or equal to 2 (MUST be 1 ray in each corner)
-		horizontalRayCount = Mathf.Clamp(horizontalRayCount, 2, int.MaxValue);
-		verticalRayCount = Mathf.Clamp (verticalRayCount, 2, int.MaxValue);
-
-		// Calculate the Ray Spacing
-		horizontalRaySpacing = bounds.size.y / (horizontalRayCount -1);
-		verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
-	}
-
-	// A struct defining the Vector2 positions of the BoxCollider2D corners
-	struct RaycastOrigins{
-		public Vector2 topLeft, topRight;
-		public Vector2 bottomLeft, bottomRight;
 	}
 
 	// a public struct to get info on which direction the collisiosn are being executed
