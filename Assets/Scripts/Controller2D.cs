@@ -74,7 +74,13 @@ public class Controller2D : MonoBehaviour {
 
 				if (i == 0 && slopeAngle <= maxClimbAngle) {
 					//Debug.Log ("Slope Angle: " + slopeAngle);
+					float distanceToSlopeStart = 0;
+					if (slopeAngle != collisions.slopeAngleOld) {
+						distanceToSlopeStart = hit.distance - skinWidth;
+						velocity.x -= distanceToSlopeStart * directionX;
+					}
 					ClimbSlope(ref velocity, slopeAngle);
+					velocity.x += distanceToSlopeStart * directionX;
 				}
 
 				if (!collisions.climbingSlope || slopeAngle > maxClimbAngle) {
