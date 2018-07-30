@@ -18,6 +18,7 @@ public class Controller2D : MonoBehaviour {
 
 	// Max slope angle that can be climbed
 	public float maxClimbAngle = 80f;
+	public float maxDescendAngle = 75f;
 
 	// The spacing between the Raycasts
 	public float horizontalRaySpacing;
@@ -35,9 +36,13 @@ public class Controller2D : MonoBehaviour {
 	public void Move(Vector3 velocity){
 		// Call the UpdateRaycastOrigins function
 		UpdateRaycastOrigins ();
-
 		collisions.Reset ();
+		collisions.velocityOld = velocity;
 
+		if (velocity.y < 0) {
+			// Call the DescendSlope function
+			DescendSlope (ref velocity);
+		}
 		if (velocity.x != 0) {
 			// Call the HorizontalCollisions function
 			HorizontalCollisions (ref velocity);
@@ -46,7 +51,6 @@ public class Controller2D : MonoBehaviour {
 			// Call the VerticalCollisions function
 			VerticalCollisions(ref velocity);
 		}
-
 		// Moving the player via the transform.Translate function
 		transform.Translate (velocity);
 	}
@@ -73,6 +77,10 @@ public class Controller2D : MonoBehaviour {
 				float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
 
 				if (i == 0 && slopeAngle <= maxClimbAngle) {
+					if (collisions.descendingSlope) {
+						collisions.descendingSlope = false;
+						velocity = collisions.velocityOld;
+					}
 					//Debug.Log ("Slope Angle: " + slopeAngle);
 					float distanceToSlopeStart = 0;
 					if (slopeAngle != collisions.slopeAngleOld) {
@@ -132,6 +140,22 @@ public class Controller2D : MonoBehaviour {
 				collisions.above = directionY == 1;
 			}
 		}
+
+		// This IF statement prevents the player from getting stuck on curves in slopes (most likey at the end of the frame)
+		if (collisions.climbingSlope) {
+			float directionX = Mathf.Sign (velocity.x);
+			rayLength = Mathf.Abs (velocity.x) + skinWidth;
+			Vector2 rayOrigin = ((directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight) + Vector2.up * velocity.y;
+			RaycastHit2D hit = Physics2D.Raycast (rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
+
+			if (hit) {
+				float slopeAngle = Vector2.Angle (hit.normal, Vector2.up);
+				if (slopeAngle != collisions.slopeAngle) {
+					velocity.x = (hit.distance - skinWidth) * directionX;
+					collisions.slopeAngle = slopeAngle;
+				}
+			}
+		}
 	}
 
 	void ClimbSlope(ref Vector3 velocity, float slopeAngle){
@@ -153,6 +177,31 @@ public class Controller2D : MonoBehaviour {
 		}
 	}
 
+	void DescendSlope(ref Vector3 velocity){
+		float directionX = Mathf.Sign (velocity.x);
+		// Cast Ray if descending
+		Vector2 rayOrigin = (directionX == -1)?raycastOrigins.bottomRight: raycastOrigins.bottomLeft;
+		RaycastHit2D hit = Physics2D.Raycast (rayOrigin, -Vector2.up, Mathf.Infinity, collisionMask);
+
+		if (hit) {
+			float slopeAngle = Vector2.Angle (hit.normal, Vector2.up);
+			if (slopeAngle != 0 && slopeAngle <= maxDescendAngle) {
+				if (Mathf.Sign (hit.normal.x) == directionX) {
+					if (hit.distance - skinWidth <= Mathf.Tan (slopeAngle * Mathf.Deg2Rad) * Mathf.Abs (velocity.x)) {
+						float moveDistance = Mathf.Abs (velocity.x);
+						float descendVelocityY = Mathf.Sin (slopeAngle * Mathf.Deg2Rad) * moveDistance;
+						velocity.x = Mathf.Cos (slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(velocity.x);
+						velocity.y -= descendVelocityY;
+
+						// Update the collisions
+						collisions.slopeAngle = slopeAngle;
+						collisions.descendingSlope = true;
+						collisions.below = true;
+					}
+				}
+			}
+		}
+	}
 
 	// This function updates the RaycastOrigin positions
 	void UpdateRaycastOrigins(){
@@ -183,8 +232,6 @@ public class Controller2D : MonoBehaviour {
 		// Calculate the Ray Spacing
 		horizontalRaySpacing = bounds.size.y / (horizontalRayCount -1);
 		verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
-
-
 	}
 
 	// A struct defining the Vector2 positions of the BoxCollider2D corners
@@ -199,12 +246,17 @@ public class Controller2D : MonoBehaviour {
 		public bool left, right;
 
 		public bool climbingSlope;
+		public bool descendingSlope;
 		public float slopeAngle, slopeAngleOld;
+
+		public Vector3 velocityOld;
 
 		public void Reset(){
 			above = below = false;
 			left = right = false;
 			climbingSlope = false;
+			descendingSlope = false;
+
 			slopeAngleOld = slopeAngle;
 			slopeAngle = 0;
 		}
