@@ -87,6 +87,12 @@ public class Controller2D : MonoBehaviour {
 					velocity.x = (hit.distance - skinWidth) * directionX;
 					rayLength = hit.distance;
 
+					// Re-calculating the Y velocity of the player while moving up slopes
+					if (collisions.climbingSlope) {
+						velocity.y = Mathf.Tan (collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Abs (velocity.x);
+					}
+
+
 					// if the player is moving left AND they've collided with something on the left, collisions.left is equal to true
 					collisions.left = directionX == -1;
 					// if the player is moving right AND they've collided with something on the right, collisions.right is equal to true
@@ -114,6 +120,11 @@ public class Controller2D : MonoBehaviour {
 			if (hit){
 				velocity.y = (hit.distance - skinWidth) * directionY;
 				rayLength = hit.distance;
+
+				// Re-calculating the X velocity of the player while moving up slopes
+				if (collisions.climbingSlope) {
+					velocity.x = velocity.y / Mathf.Tan (collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Sign (velocity.x);
+				}
 
 				// if the player is moving downwards AND they've collided with something below them, collisions.below is equal to true
 				collisions.below = directionY == -1;
