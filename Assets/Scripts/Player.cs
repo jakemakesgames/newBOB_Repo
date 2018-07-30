@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using XboxCtrlrInput;
 
 [RequireComponent(typeof(Controller2D))]
 public class Player : MonoBehaviour {
@@ -44,7 +45,6 @@ public class Player : MonoBehaviour {
 
 		// Store the Input in a Vector2 variable
 		Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-
 
 		// If the Spacebar is pressed call the Jump funtion
 		if (Input.GetKeyDown (KeyCode.Space) && controller.collisions.below) {
