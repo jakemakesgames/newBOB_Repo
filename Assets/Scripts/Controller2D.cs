@@ -17,7 +17,7 @@ public class Controller2D : RaycastController {
 	}
 
 	// This is the function that moves the Player (Called from the Player script)
-	public void Move(Vector3 velocity){
+	public void Move(Vector3 velocity, bool standingOnPlatform = false){
 		// Call the UpdateRaycastOrigins function
 		UpdateRaycastOrigins ();
 		collisions.Reset ();
@@ -37,6 +37,10 @@ public class Controller2D : RaycastController {
 		}
 		// Moving the player via the transform.Translate function
 		transform.Translate (velocity);
+
+		if (standingOnPlatform) {
+			collisions.below = true;
+		}
 	}
 
 	void HorizontalCollisions(ref Vector3 velocity){
@@ -56,6 +60,10 @@ public class Controller2D : RaycastController {
 			Debug.DrawRay (rayOrigin, Vector2.right * directionX * rayLength, Color.green);
 
 			if (hit){
+
+				if (hit.distance == 0) {
+					continue;
+				}
 
 				// Find and get the angle of the ground the player is standing on -> the angle is found as the distance between the surfaces normal and the global UP direction
 				float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
