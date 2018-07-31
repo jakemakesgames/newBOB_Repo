@@ -47,7 +47,7 @@ public class Player : MonoBehaviour {
 		Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
 		// If the Spacebar is pressed call the Jump funtion
-		if (Input.GetKeyDown (KeyCode.Space) || XCI.GetButtonDown(XboxButton.A) && controller.collisions.below) {
+		if (Input.GetKeyDown (KeyCode.Space) && controller.collisions.below || XCI.GetButtonDown(XboxButton.A) && controller.collisions.below) {
 			Jump ();
 		}
 
