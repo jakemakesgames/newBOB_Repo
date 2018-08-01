@@ -7,11 +7,19 @@ public class PlatformController : RaycastController {
 	public LayerMask passengerMask;
 	public Vector3 move;
 
+	public Vector3[] localWaypoints;
+	Vector3[] globalWaypoints;
+
 	List<PassengerMovement> passengerMovement;
 	Dictionary<Transform, Controller2D> passengerDictionary = new Dictionary<Transform, Controller2D>();
 
 	public override void Start(){
 		base.Start ();
+
+		globalWaypoints = new Vector3[localWaypoints.Length];
+		for (int i = 0; i < localWaypoints.Length; i++) {
+			globalWaypoints [i] = localWaypoints [i] + transform.position;
+		}
 	}
 
 	void Update(){
@@ -20,10 +28,15 @@ public class PlatformController : RaycastController {
 
 		Vector3 velocity = move * Time.deltaTime;
 
+		// Call the CalculatePassengerMovement Function (This funtion passes in the velocity variable)
 		CalculatePassengerMovement (velocity);
 
+		// Return TRUE for the MovePassengers Bool
 		MovePassengers (true);
+		// Move the platform via the transform.Translate method (passing in the velocity variable)
 		transform.Translate (velocity);
+
+		// Return FALSE for the MovePassengers Bool
 		MovePassengers (false);
 	}
 
@@ -136,6 +149,24 @@ public class PlatformController : RaycastController {
 			velocity = _velocity;
 			standingOnPlatform = _standingOnPlatform;
 			moveBeforePlatform = _moveBeforePlatform;
+		}
+	}
+
+	// This funtion is responsible for drawing the Waypoint Gizmos showing the path of the moving platforms. Purely for designing and debugging
+	//  THIS WILL NOT BE SHOWN DURING RUNTUIME/ GAME WINDOW
+	void OnDrawGizmos(){
+		if (localWaypoints != null) {
+			Gizmos.color = Color.red;
+			float size = .3f;
+
+			for (int i = 0; i < localWaypoints.Length; i++) {
+				// If the Application IS running, use the global waypoints array, else use the local waypoints array
+				Vector3 globalWaypointPos = (Application.isPlaying)?globalWaypoints[i]:localWaypoints [i] + transform.position;
+				// Draw the vertical line of the waypoint
+				Gizmos.DrawLine (globalWaypointPos - Vector3.up * size, globalWaypointPos + Vector3.up * size);
+				// Draw the horizontal line of the waypoint
+				Gizmos.DrawLine (globalWaypointPos - Vector3.left * size, globalWaypointPos + Vector3.left * size);
+			}
 		}
 	}
 }
