@@ -5,10 +5,13 @@ using UnityEngine;
 public class PlatformController : RaycastController {
 
 	public LayerMask passengerMask;
-	public Vector3 move;
 
 	public Vector3[] localWaypoints;
 	Vector3[] globalWaypoints;
+
+	public float speed;
+	private int fromWaypointIndex;
+	private float percentBetweenWaypoints;
 
 	List<PassengerMovement> passengerMovement;
 	Dictionary<Transform, Controller2D> passengerDictionary = new Dictionary<Transform, Controller2D>();
@@ -26,7 +29,7 @@ public class PlatformController : RaycastController {
 		// Call the UpdateRaycastOrigins funtion
 		UpdateRaycastOrigins ();
 
-		Vector3 velocity = move * Time.deltaTime;
+		Vector3 velocity = CalculatePlatformMovement ();
 
 		// Call the CalculatePassengerMovement Function (This funtion passes in the velocity variable)
 		CalculatePassengerMovement (velocity);
@@ -38,6 +41,31 @@ public class PlatformController : RaycastController {
 
 		// Return FALSE for the MovePassengers Bool
 		MovePassengers (false);
+	}
+
+	// This Vector3 Calculates the Movement of the Platform -> Which waypoint it's moving away from and which waypoint it is moving towards etc.
+	Vector3 CalculatePlatformMovement(){
+		int toWaypointIndex = fromWaypointIndex + 1;
+		float distanceBetweenWaypoints = Vector3.Distance (globalWaypoints [fromWaypointIndex], globalWaypoints [toWaypointIndex]);
+		percentBetweenWaypoints += Time.deltaTime * speed/ distanceBetweenWaypoints;
+
+		Vector3 newPos = Vector3.Lerp (globalWaypoints [fromWaypointIndex], globalWaypoints [toWaypointIndex], percentBetweenWaypoints);
+
+		if (percentBetweenWaypoints >= 1) {
+			percentBetweenWaypoints = 0;
+			fromWaypointIndex++;
+
+			// Make sure the next waypoint isn't outside the array
+			if (fromWaypointIndex >= globalWaypoints.Length -1){
+				// End of waypoints has been reached
+				fromWaypointIndex = 0;
+				// Move backwards through the waypoints -> Reverse the array
+				System.Array.Reverse(globalWaypoints);
+			}
+		}
+
+		return newPos - transform.position;
+
 	}
 
 	void MovePassengers(bool beforeMovePlatform){
