@@ -10,8 +10,12 @@ public class PlatformController : RaycastController {
 	Vector3[] globalWaypoints;
 
 	public float speed;
+	public bool cyclic;
+	public float waitTime;
+
 	private int fromWaypointIndex;
 	private float percentBetweenWaypoints;
+	private float nextMoveTime;
 
 	List<PassengerMovement> passengerMovement;
 	Dictionary<Transform, Controller2D> passengerDictionary = new Dictionary<Transform, Controller2D>();
@@ -45,7 +49,14 @@ public class PlatformController : RaycastController {
 
 	// This Vector3 Calculates the Movement of the Platform -> Which waypoint it's moving away from and which waypoint it is moving towards etc.
 	Vector3 CalculatePlatformMovement(){
-		int toWaypointIndex = fromWaypointIndex + 1;
+		if (Time.time < nextMoveTime) {
+			return Vector3.zero;
+		}
+
+		// Reset every time it reaches the max
+		fromWaypointIndex %= globalWaypoints.Length;
+
+		int toWaypointIndex = (fromWaypointIndex + 1) % globalWaypoints.Length;
 		float distanceBetweenWaypoints = Vector3.Distance (globalWaypoints [fromWaypointIndex], globalWaypoints [toWaypointIndex]);
 		percentBetweenWaypoints += Time.deltaTime * speed/ distanceBetweenWaypoints;
 
@@ -55,17 +66,18 @@ public class PlatformController : RaycastController {
 			percentBetweenWaypoints = 0;
 			fromWaypointIndex++;
 
-			// Make sure the next waypoint isn't outside the array
-			if (fromWaypointIndex >= globalWaypoints.Length -1){
-				// End of waypoints has been reached
-				fromWaypointIndex = 0;
-				// Move backwards through the waypoints -> Reverse the array
-				System.Array.Reverse(globalWaypoints);
+			if (!cyclic) {
+				// Make sure the next waypoint isn't outside the array
+				if (fromWaypointIndex >= globalWaypoints.Length -1){
+					// End of waypoints has been reached
+					fromWaypointIndex = 0;
+					// Move backwards through the waypoints -> Reverse the array
+					System.Array.Reverse(globalWaypoints);
+				}
 			}
+			nextMoveTime = Time.time + waitTime;
 		}
-
 		return newPos - transform.position;
-
 	}
 
 	void MovePassengers(bool beforeMovePlatform){
