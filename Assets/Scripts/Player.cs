@@ -10,11 +10,12 @@ public class Player : MonoBehaviour {
 
 	public float moveSpeed = 6;
 
+	public float wallSlideSpeedMax = 3;
+
 	// How high do we want the player to jump?
 	public float jumpHeight = 4;
 	// How long do we want the player to take to reach the Apex of the jump curve
 	public float timeToJumpApex = .4f;
-
 	[SerializeField] private float gravity;
 	[SerializeField] private float jumpVelocity;
 
@@ -37,7 +38,17 @@ public class Player : MonoBehaviour {
 	} 	
 
 	void Update(){
-		
+
+		bool wallSliding = false;
+		// Check if the player can actually wall slide (they must be colliding with a wall to the left of right, and not touching the ground)
+		if ((controller.collisions.left || controller.collisions.right) && !controller.collisions.below && velocity.y < 0){
+			wallSliding = true;
+
+			if (velocity.y < -wallSlideSpeedMax) {
+				velocity.y = -wallSlideSpeedMax;
+			}
+		}
+
 		// This IF check stops the player from accumulating gravity, therefore stopping them from falling at a super fast speed
 		if (controller.collisions.above || controller.collisions.below) {
 			velocity.y = 0;
