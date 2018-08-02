@@ -13,7 +13,7 @@ public class Controller2D : RaycastController {
 
 	public override void Start(){
 		base.Start ();
-
+		collisions.faceDir = 1;
 	}
 
 	// This is the function that moves the Player (Called from the Player script)
@@ -23,14 +23,18 @@ public class Controller2D : RaycastController {
 		collisions.Reset ();
 		collisions.velocityOld = velocity;
 
+		if (velocity.x != 0) {
+			collisions.faceDir = (int)Mathf.Sign (velocity.x);
+		}
+
 		if (velocity.y < 0) {
 			// Call the DescendSlope function
 			DescendSlope (ref velocity);
 		}
-		if (velocity.x != 0) {
-			// Call the HorizontalCollisions function
-			HorizontalCollisions (ref velocity);
-		}
+
+		// Call the HorizontalCollisions function
+		HorizontalCollisions (ref velocity);
+
 		if (velocity.y != 0) {
 			// Call the VerticalCollisions function
 			VerticalCollisions(ref velocity);
@@ -45,8 +49,12 @@ public class Controller2D : RaycastController {
 
 	void HorizontalCollisions(ref Vector3 velocity){
 
-		float directionX = Mathf.Sign (velocity.x);
+		float directionX = collisions.faceDir;
 		float rayLength = Mathf.Abs (velocity.x) + skinWidth;
+
+		if (Mathf.Abs (velocity.x) < skinWidth) {
+			rayLength = 2 * skinWidth;
+		}
 
 		// Debug Draw the Bottom Left Vertical Raycast
 		for (int i = 0; i < horizontalRayCount; i++) {
@@ -205,6 +213,10 @@ public class Controller2D : RaycastController {
 		public float slopeAngle, slopeAngleOld;
 
 		public Vector3 velocityOld;
+
+		// 1= facing right 
+		// -1 = facing left
+		public int faceDir;
 
 		public void Reset(){
 			above = below = false;
